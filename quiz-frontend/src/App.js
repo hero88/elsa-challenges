@@ -38,7 +38,6 @@ const App = () => {
             const { type, payload } = JSON.parse(event.data);
 
             if (type === 'quiz_joined') {
-                alert(`Successfully joined quiz!`);
                 setHasJoined(true);
                 fetchQuestion(0); // Fetch the first question when the quiz is joined
             } else if (type === 'error') {
@@ -59,9 +58,18 @@ const App = () => {
             })
         );
 
-        // Clear the answer input after submission
-        setAnswer('');
-        setHasSubmitted(true); // Prevent further submissions for this question
+        ws.onmessage = (event) => {
+            const { type, payload } = JSON.parse(event.data);
+
+            if (type === 'leaderboard_update') {
+                // Clear the answer input after submission
+                setAnswer('');
+                setHasSubmitted(true); // Prevent further submissions for this question
+                setLeaderboard(payload.formattedLeaderboard);
+            } else if (type === 'error') {
+                alert(`Error: ${payload}`);
+            }
+        };
     };
 
     /**
