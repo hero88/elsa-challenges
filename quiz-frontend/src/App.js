@@ -10,6 +10,7 @@ const App = () => {
     const [loadingQuestion, setLoadingQuestion] = useState(false); // Question loading state
     const [questionIndex, setQuestionIndex] = useState(0); // Tracks the current question index
     const [hasSubmitted, setHasSubmitted] = useState(false); // Tracks if the user has submitted an answer
+    const [hasJoined, setHasJoined] = useState(false); // Tracks if the user has joined a quiz
 
     useEffect(() => {
         const socket = new WebSocket('ws://localhost:8081');
@@ -26,11 +27,30 @@ const App = () => {
         return () => socket.close();
     }, []);
 
+    /**
+     * Joins a quiz and sends a WebSocket message to the server.
+     * If the server responds with a 'quiz_joined' message, an alert is shown and the first question is fetched.
+     * If the server responds with an 'error' message, an alert with the error message is shown.
+     */
     const joinQuiz = () => {
         ws.send(JSON.stringify({ type: 'join_quiz', payload: { quizId, userId } }));
-        fetchQuestion(0); // Fetch the first question when the quiz is joined
+        ws.onmessage = (event) => {
+            const { type, payload } = JSON.parse(event.data);
+
+            if (type === 'quiz_joined') {
+                alert(`Successfully joined quiz!`);
+                setHasJoined(true);
+                fetchQuestion(0); // Fetch the first question when the quiz is joined
+            } else if (type === 'error') {
+                alert(`Error: ${payload}`);
+            }
+        };
     };
 
+    /**
+     * Sends the user's answer to the server and clears the answer input.
+     * Also prevents further submissions for the same question.
+     */
     const submitAnswer = () => {
         ws.send(
             JSON.stringify({
@@ -44,6 +64,13 @@ const App = () => {
         setHasSubmitted(true); // Prevent further submissions for this question
     };
 
+    /**
+     * Fetches a question from the server at the given index.
+     * If the server responds with a 200 status code, the question text is updated and the submission status is reset.
+     * If the server responds with a non-200 status code, an alert is shown with the error message.
+     * If an error occurs while making the request, the question text is set to an error message.
+     * @param {number} index The index of the question to fetch.
+     */
     const fetchQuestion = async (index) => {
         if (!quizId) {
             alert('Please enter a Quiz ID.');
@@ -69,6 +96,10 @@ const App = () => {
         }
     };
 
+    /**
+     * Fetches the next question from the server.
+     * This function is called when the user clicks the "Next" button.
+     */
     const nextQuestion = () => {
         fetchQuestion(questionIndex + 1);
     };
@@ -105,7 +136,10 @@ const App = () => {
                             />
                         </div>
                     </div>
-                    <button className="btn btn-primary mt-3 w-100" onClick={joinQuiz}>
+                    <button className="btn btn-primary mt-3 w-100"
+                        onClick={joinQuiz}
+                        disabled={hasJoined} // Disable button if the user is already joined
+                    >
                         Join Quiz
                     </button>
                 </div>

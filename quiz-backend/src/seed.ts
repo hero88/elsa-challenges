@@ -19,12 +19,12 @@ const seed = async () => {
     { quiz, question_text: 'What is the antonym of "fast"?', correct_answer: 'slow' },
   ]);
 
-  const user1 = await userRepo.save({ username: 'user1' });
-  const user2 = await userRepo.save({ username: 'user2' });
+  const user1 = await userRepo.save({ username: 'userOne' });
+  const user2 = await userRepo.save({ username: 'userTwo' });
 
   await leaderboardRepo.save([
-    { quiz, user: user1, score: 10 },
-    { quiz, user: user2, score: 20 },
+    { quiz, user: user1, score: 0 },
+    { quiz, user: user2, score: 0 },
   ]);
 
   console.log('Seed data inserted!');
